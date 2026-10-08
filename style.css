@@ -1,5 +1,6 @@
 /* Design Tokens */
 :root {
+  /* Colors */
   --color-primary: #2563eb;
   --color-success: #16a34a;
   --color-danger: #dc2626;
@@ -10,54 +11,60 @@
   --color-muted: #64748b;
   --color-border: #e2e8f0;
 
+  /* Spacing */
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
   --spacing-md: 1rem;
   --spacing-lg: 1.5rem;
   --spacing-xl: 2rem;
 
+  /* Radii */
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
+
+  /* Font */
+  --font-sans: system-ui, -apple-system, sans-serif;
 }
 
-/* Utility Classes (Tailwind equivalents) */
+/* Utility Classes (Tailwind-like) */
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.flex-wrap { flex-wrap: wrap; }
+.justify-between { justify-content: space-between; }
+.grid { display: grid; }
+.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+.gap-2 { gap: var(--spacing-sm); }
+.gap-4 { gap: var(--spacing-lg); }
+.mb-2 { margin-bottom: var(--spacing-sm); }
+.mb-6 { margin-bottom: var(--spacing-xl); }
+.p-4 { padding: var(--spacing-lg); }
+.min-h-screen { min-height: 100vh; }
+.rounded-md { border-radius: var(--radius-md); }
+.shadow { box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.text-2xl { font-size: 1.5rem; line-height: 2rem; }
+.text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+.text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+.font-bold { font-weight: 700; }
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+.font-sans { font-family: var(--font-sans); }
+.h-96 { height: 24rem; }
+
+/* Background & Text Colors */
 .bg-bg { background-color: var(--color-bg); }
 .bg-card { background-color: var(--color-card); }
 .bg-primary { background-color: var(--color-primary); }
 .text-text { color: var(--color-text); }
 .text-muted { color: var(--color-muted); }
-.text-success { color: var(--color-success); }
-.text-danger { color: var(--color-danger); }
-.text-warning { color: var(--color-warning); }
 .text-white { color: #ffffff; }
-.text-2xl { font-size: 1.5rem; line-height: 2rem; }
-.text-lg { font-size: 1.125rem; line-height: 1.75rem; }
-.text-sm { font-size: 0.875rem; line-height: 1.25rem; }
-.font-sans { font-family: system-ui, -apple-system, sans-serif; }
-.font-medium { font-weight: 500; }
-.font-bold { font-weight: 700; }
-.font-semibold { font-weight: 600; }
-.rounded-md { border-radius: var(--radius-md); }
-.shadow-sm { box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); }
-.p-4 { padding: var(--spacing-md); }
-.mb-2 { margin-bottom: var(--spacing-sm); }
-.mb-6 { margin-bottom: var(--spacing-lg); }
-.gap-2 { gap: var(--spacing-sm); }
-.gap-4 { gap: var(--spacing-md); }
-.min-h-screen { min-height: 100vh; }
-.h-96 { height: 24rem; }
-.flex { display: flex; }
-.flex-wrap { flex-wrap: wrap; }
-.grid { display: grid; }
-.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
 
 /* Card Component */
 .card {
   background-color: var(--color-card);
   border-radius: var(--radius-md);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   padding: var(--spacing-md);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .card:hover {
@@ -73,39 +80,35 @@
   border-radius: var(--radius-sm);
   padding: var(--spacing-xs) var(--spacing-sm);
   cursor: pointer;
+  font-size: 0.875rem;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 .filter-btn:hover {
   background-color: var(--color-muted);
-  color: #fff;
+  color: #ffffff;
 }
 .filter-btn.active {
   background-color: var(--color-primary);
-  color: #fff;
+  color: #ffffff;
   border-color: var(--color-primary);
 }
+
+/* Active State Helper */
+.active { /* generic active helper – can be used on any element */ }
 
 /* Chart Container */
 .chart-wrap {
   position: relative;
   width: 100%;
-  min-height: 300px; /* fallback for small screens */
   height: 100%;
-}
-/* Ensure the canvas fills the container */
-.chart-wrap canvas {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100% !important;
-  height: 100% !important;
+  min-height: 300px;
 }
 
-/* Responsive Grid Adjustments */
-@media (min-width: 640px) {
+/* Responsive Grid Classes */
+@media (min-width: 640px) { /* sm */
   .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-@media (min-width: 1024px) {
+@media (min-width: 1024px) { /* lg */
   .lg\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lg\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
