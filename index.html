@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" class="bg-background text-text">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Personal Finance Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script type="module" src="script.js"></script>
+</head>
+<body class="font-sans p-md">
+  <header class="mb-lg">
+    <h1 class="text-2xl font-bold">Personal Finance Dashboard</h1>
+  </header>
+
+  <section class="summary-cards grid gap-md grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-lg">
+    <div class="card card-balance">
+      <h2 class="card-title">Total Balance</h2>
+      <p class="card-value" id="total-balance">$0.00</p>
+    </div>
+    <div class="card card-income">
+      <h2 class="card-title">Income</h2>
+      <p class="card-value" id="total-income">$0.00</p>
+    </div>
+    <div class="card card-expenses">
+      <h2 class="card-title">Expenses</h2>
+      <p class="card-value" id="total-expenses">$0.00</p>
+    </div>
+    <div class="card card-savings">
+      <h2 class="card-title">Savings</h2>
+      <p class="card-value" id="total-savings">$0.00</p>
+    </div>
+  </section>
+
+  <section class="filter-group flex flex-wrap gap-sm mb-lg">
+    <button class="filter-btn active" data-category="all">All</button>
+    <button class="filter-btn" data-category="Food">Food</button>
+    <button class="filter-btn" data-category="Transport">Transport</button>
+    <button class="filter-btn" data-category="Entertainment">Entertainment</button>
+    <button class="filter-btn" data-category="Shopping">Shopping</button>
+    <button class="filter-btn" data-category="Health">Health</button>
+  </section>
+
+  <section class="charts grid gap-lg grid-cols-1 lg:grid-cols-2">
+    <div class="chart-card">
+      <h2 class="chart-title">Spending by Category</h2>
+      <canvas id="category-bar-chart" class="chart-canvas"></canvas>
+    </div>
+    <div class="chart-card">
+      <h2 class="chart-title">Monthly Trend</h2>
+      <canvas id="monthly-line-chart" class="chart-canvas"></canvas>
+    </div>
+  </section>
+</body>
+</html>
