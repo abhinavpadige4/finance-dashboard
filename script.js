@@ -1,6 +1,172 @@
-{
-  "files": [
-    {
-      "path": "script.js",
-      "content": "(function() {\n  // Design tokens (mirroring the shared design tokens for consistency)\n  const COLORS = {\n    primary: '#2563eb',\n    success: '#16a34a',\n    danger: '#dc2626',\n    warning: '#f59e0b',\n    chart: ['#2563eb', '#16a34a', '#f59e0b', '#dc2626', '#9333ea', '#0891b2', '#ea580c', '#7c3aed']\n  };\n\n  // Mock data ---------------------------------------------------------------\n  const transactions = [\n    { id: 't1', date: '2024-01-05', amount: -45.23, category: 'Food', type: 'expense', description: 'Groceries' },\n    { id: 't2', date: '2024-01-10', amount: -12.5, category: 'Transport', type: 'expense', description: 'Bus pass' },\n    { id: 't3', date: '2024-01-15', amount: 2500, category: 'Salary', type: 'income', description: 'January salary' },\n    { id: 't4', date: '2024-01-20', amount: -80, category: 'Entertainment', type: 'expense', description: 'Concert ticket' },\n    { id: 't5', date: '2024-02-02', amount: -60, category: 'Utilities', type: 'expense', description: 'Electricity bill' },\n    { id: 't6', date: '2024-02-07', amount: 300, category: 'Freelance', type: 'income', description: 'Project work' },\n    { id: 't7', date: '2024-02-12', amount: -30, category: 'Food', type: 'expense', description: 'Restaurant' },\n    { id: 't8', date: '2024-02-18', amount: -15, category: 'Transport', type: 'expense', description: 'Taxi' },\n    { id: 't9', date: '2024-03-01', amount: 2600, category: 'Salary', type: 'income', description: 'February salary' },\n    { id: 't10', date: '2024-03-05', amount: -120, category: 'Utilities', type: 'expense', description: 'Water bill' },\n    { id: 't11', date: '2024-03-10', amount: -200, category: 'Entertainment', type: 'expense', description: 'Streaming subscription' },\n    { id: 't12', date: '2024-03-15', amount: -50, category: 'Food', type: 'expense', description: 'Groceries' },\n    { id: 't13', date: '2024-03-20', amount: 400, category: 'Freelance', type: 'income', description: 'Consulting' }\n  ];\n\n  // Helper to format numbers as currency\n  const fmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });\n\n  // State ---------------------------------------------------------------\n  let activeCategory = 'All'; // default shows all data\n\n  // DOM references -------------------------------------------------------\n  const summaryEls = {\n    totalBalance: document.getElementById('summary-balance'),\n    totalIncome: document.getElementById('summary-income'),\n    totalExpenses: document.getElementById('summary-expenses'),\n    totalSavings: document.getElementById('summary-savings')\n  };\n\n  const filterButtons = document.querySelectorAll('.filter-btn');\n  const barCtx = document.getElementById('categoryBarChart').getContext('2d');\n  const lineCtx = document.getElementById('monthlyLineChart').getContext('2d');\n\n  // Chart instances (will be created once and updated)\n  let barChart, lineChart;\n\n  // ---------------------------------------------------------------------\n  // Data processing functions\n  // ---------------------------------------------------------------------\n  function getFilteredTransactions() {\n    if (activeCategory === 'All') return transactions;\n    return transactions.filter(t => t.category === activeCategory);\n  }\n\n  function calculateSummary() {\n    const filtered = getFilteredTransactions();\n    let income = 0, expenses = 0;\n    filtered.forEach(t => {\n      if (t.type === 'income') income += t.amount;\n      else expenses += t.amount; // amount is negative for expenses\n    });\n    const balance = income + expenses; // expenses negative\n    const savings = income - Math.abs(expenses);\n    return { balance, income, expenses: Math.abs(expenses), savings };\n  }\n\n  function updateSummaryCards() {\n    const { balance, income, expenses, savings } = calculateSummary();\n    summaryEls.totalBalance.textContent = fmt.format(balance);\n    summaryEls.totalIncome.textContent = fmt.format(income);\n    summaryEls.totalExpenses.textContent = fmt.format(expenses);\n    summaryEls.totalSavings.textContent = fmt.format(savings);\n  }\n\n  function aggregateByCategory() {\n    const filtered = getFilteredTransactions();\n    const map = {};\n    filtered.forEach(t => {\n      if (t.type !== 'expense') return; // only expenses for spending chart\n      if (!map[t.category]) map[t.category] = 0;\n      map[t.category] += Math.abs(t.amount);\n    });\n    const labels = Object.keys(map);\n    const data = labels.map(l => map[l]);\n    return { labels, data };\n  }\n\n  function aggregateMonthly() {\n    // Group by month (YYYY-MM) and sum income/expenses\n    const map = {};\n    transactions.forEach(t => {\n      const month = t.date.slice(0, 7);\n      if (!map[month]) map[month] = { income: 0, expenses: 0 };\n      if (t.type === 'income') map[month].income += t.amount;\n      else map[month].expenses += Math.abs(t.amount);\n    });\n    const sortedMonths = Object.keys(map).sort();\n    const incomeData = sortedMonths.map(m => map[m].income);\n    const expenseData = sortedMonths.map(m => map[m].expenses);\n    const balanceData = sortedMonths.map(m => map[m].income - map[m].expenses);\n    return { months: sortedMonths, incomeData, expenseData, balanceData };\n  }\n\n  // ---------------------------------------------------------------------\n  // Chart rendering\n  // ---------------------------------------------------------------------\n  function renderBarChart() {\n    const { labels, data } = aggregateByCategory();\n    const config = {\n      type: 'bar',\n      data: {\n        labels,\n        datasets: [{\n          label: 'Spending by Category',\n          data,\n          backgroundColor: COLORS.chart.slice(0, labels.length),\n          borderRadius: 4,\n          barThickness: 24\n        }]\n      },\n      options: {\n        responsive: true,\n        plugins: { legend: { display: false } },\n        scales: {\n          y: { beginAtZero: true, ticks: { callback: v => fmt.format(v) } }\n        }\n      }\n    };\n    if (barChart) barChart.destroy();\n    barChart = new Chart(barCtx, config);\n  }\n\n  function renderLineChart() {\n    const { months, incomeData, expenseData, balanceData } = aggregateMonthly();\n    const config = {\n      type: 'line',\n      data: {\n        labels: months,\n        datasets: [\n          {\n            label: 'Income',\n            data: incomeData,\n            borderColor: COLORS.success,\n            backgroundColor: COLORS.success,\n            tension: 0.3,\n            fill: false\n          },\n          {\n            label: 'Expenses',\n            data: expenseData,\n            borderColor: COLORS.danger,\n            backgroundColor: COLORS.danger,\n            tension: 0.3,\n            fill: false\n          },\n          {\n            label: 'Balance',\n            data: balanceData,\n            borderColor: COLORS.primary,\n            backgroundColor: COLORS.primary,\n            tension: 0.3,\n            fill: false,\n            borderWidth: 2,\n            pointRadius: 4\n          }\n        ]\n      },\n      options: {\n        responsive: true,\n        plugins: { legend: { position: 'top' } },\n        scales: {\n          y: { beginAtZero: false, ticks: { callback: v => fmt.format(v) } }\n        }\n      }\n    };\n    if (lineChart) lineChart.destroy();\n    lineChart = new Chart(lineCtx, config);\n  }\n\n  // ---------------------------------------------------------------------\n  // Filter handling\n  // ---------------------------------------------------------------------\n  function setActiveCategory(cat) {\n    activeCategory = cat;\n    filterButtons.forEach(btn => {\n      if (btn.dataset.category === cat) btn.classList.add('active');\n      else btn.classList.remove('active');\n    });\n    updateSummaryCards();\n    renderBarChart();\n  }\n\n  function initFilters() {\n    filterButtons.forEach(btn => {\n      btn.addEventListener('click', () => {\n        const cat = btn.dataset.category;\n        setActiveCategory(cat);\n      });\n    });\n  }\n\n  // ---------------------------------------------------------------------\n  // Init\n  // ---------------------------------------------------------------------\n  function init() {\n    // default active button\n    const defaultBtn = document.querySelector('.filter-btn[data-category=\"All\"]');\n    if (defaultBtn) defaultBtn.classList.add('active');\n    updateSummaryCards();\n    renderBarChart();\n    renderLineChart();\n    initFilters();\n  }\n\n  // Run after DOM ready\n  if (document.readyState === 'loading') {\n    document.addEventListener('DOMContentLoaded', init);\n  } else {\n    init();\n  }\n})();\n"
-    }\n  ]\n}
+(function () {
+  const App = {};
+
+  // ---------- Mock Data ----------
+  App.mockData = {
+    transactions: [
+      { id: 't1', date: '2024-01-15', amount: 2500, category: 'Salary', type: 'income' },
+      { id: 't2', date: '2024-01-20', amount: -150, category: 'Groceries', type: 'expense' },
+      { id: 't3', date: '2024-01-22', amount: -75, category: 'Transport', type: 'expense' },
+      { id: 't4', date: '2024-02-05', amount: 2600, category: 'Salary', type: 'income' },
+      { id: 't5', date: '2024-02-10', amount: -200, category: 'Utilities', type: 'expense' },
+      { id: 't6', date: '2024-02-14', amount: -120, category: 'Dining', type: 'expense' },
+      { id: 't7', date: '2024-03-01', amount: 2700, category: 'Salary', type: 'income' },
+      { id: 't8', date: '2024-03-08', amount: -180, category: 'Groceries', type: 'expense' },
+      { id: 't9', date: '2024-03-12', amount: -90, category: 'Entertainment', type: 'expense' },
+      { id: 't10', date: '2024-03-20', amount: -60, category: 'Transport', type: 'expense' }
+    ]
+  };
+
+  // ---------- Utilities ----------
+  App.formatCurrency = function (num) {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
+  };
+
+  App.groupByMonth = function (transactions) {
+    const map = {};
+    transactions.forEach(t => {
+      const month = t.date.slice(0, 7); // YYYY-MM
+      if (!map[month]) map[month] = { income: 0, expenses: 0 };
+      if (t.type === 'income') map[month].income += t.amount;
+      else map[month].expenses += Math.abs(t.amount);
+    });
+    return Object.entries(map).map(([month, vals]) => ({
+      month,
+      income: vals.income,
+      expenses: vals.expenses,
+      savings: vals.income - vals.expenses
+    }));
+  };
+
+  App.calculateSummary = function (transactions) {
+    let totalIncome = 0, totalExpenses = 0;
+    transactions.forEach(t => {
+      if (t.type === 'income') totalIncome += t.amount;
+      else totalExpenses += Math.abs(t.amount);
+    });
+    const totalBalance = totalIncome - totalExpenses;
+    const totalSavings = totalBalance; // simple assumption
+    return { totalBalance, totalIncome, totalExpenses, totalSavings };
+  };
+
+  // ---------- Rendering ----------
+  App.renderSummary = function (summary) {
+    const container = document.querySelector('.summary-cards');
+    const cards = [
+      { title: 'Balance', value: summary.totalBalance, modifier: 'primary' },
+      { title: 'Income', value: summary.totalIncome, modifier: 'success' },
+      { title: 'Expenses', value: summary.totalExpenses, modifier: 'danger' },
+      { title: 'Savings', value: summary.totalSavings, modifier: 'warning' }
+    ];
+    container.innerHTML = cards.map(c => `
+      <div class="card card--${c.modifier}">
+        <div class="card__title">${c.title}</div>
+        <div class="card__value">${App.formatCurrency(c.value)}</div>
+      </div>`).join('');
+  };
+
+  App.renderFilters = function (categories) {
+    const container = document.querySelector('.filter-group');
+    const allBtn = `<button class="filter-btn active" data-cat="all">All</button>`;
+    const others = categories.map(cat => `<button class="filter-btn" data-cat="${cat}">${cat}</button>`).join('');
+    container.innerHTML = allBtn + others;
+  };
+
+  // ---------- Chart Initialization ----------
+  App.initCharts = function () {
+    const barCtx = document.getElementById('categoryBarChart').getContext('2d');
+    const lineCtx = document.getElementById('monthlyLineChart').getContext('2d');
+
+    // Bar chart (spending by category)
+    App.barChart = new Chart(barCtx, {
+      type: 'bar',
+      data: { labels: [], datasets: [{ label: 'Expenses', data: [], backgroundColor: [] }] },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'top' } },
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+
+    // Line chart (monthly trend)
+    App.lineChart = new Chart(lineCtx, {
+      type: 'line',
+      data: { labels: [], datasets: [
+        { label: 'Income', data: [], borderColor: 'var(--color-success)', tension: 0.3, fill: false },
+        { label: 'Expenses', data: [], borderColor: 'var(--color-danger)', tension: 0.3, fill: false },
+        { label: 'Savings', data: [], borderColor: 'var(--color-primary)', tension: 0.3, fill: false }
+      ] },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'right' } },
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+  };
+
+  App.updateBarChart = function (filteredTx) {
+    const expenseByCat = {};
+    filteredTx.forEach(t => {
+      if (t.type === 'expense') {
+        expenseByCat[t.category] = (expenseByCat[t.category] || 0) + Math.abs(t.amount);
+      }
+    });
+    const labels = Object.keys(expenseByCat);
+    const data = labels.map(l => expenseByCat[l]);
+    const palette = getComputedStyle(document.documentElement).getPropertyValue('--chartPalette').split(',').map(c => c.trim());
+    const colors = labels.map((_, i) => palette[i % palette.length] || '#888');
+    App.barChart.data.labels = labels;
+    App.barChart.data.datasets[0].data = data;
+    App.barChart.data.datasets[0].backgroundColor = colors;
+    App.barChart.update();
+  };
+
+  App.updateLineChart = function (monthlyAgg) {
+    const labels = monthlyAgg.map(m => m.month);
+    const income = monthlyAgg.map(m => m.income);
+    const expenses = monthlyAgg.map(m => m.expenses);
+    const savings = monthlyAgg.map(m => m.savings);
+    App.lineChart.data.labels = labels;
+    App.lineChart.data.datasets[0].data = income;
+    App.lineChart.data.datasets[1].data = expenses;
+    App.lineChart.data.datasets[2].data = savings;
+    App.lineChart.update();
+  };
+
+  // ---------- Filter Logic ----------
+  App.currentFilter = 'all';
+  App.filterByCategory = function (category) {
+    App.currentFilter = category;
+    const filtered = category === 'all' ? App.mockData.transactions : App.mockData.transactions.filter(t => t.category === category);
+    App.updateBarChart(filtered);
+    // line chart shows overall trend, not filtered by category (kept simple)
+    const monthly = App.groupByMonth(App.mockData.transactions);
+    App.updateLineChart(monthly);
+    // update active button style
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.cat === category);
+    });
+  };
+
+  // ---------- Init ----------
+  document.addEventListener('DOMContentLoaded', function () {
+    const summary = App.calculateSummary(App.mockData.transactions);
+    App.renderSummary(summary);
+
+    const categories = [...new Set(App.mockData.transactions.map(t => t.category))];
+    App.renderFilters(categories);
+
+    App.initCharts();
+    App.filterByCategory('all'); // initial render
+
+    // Event delegation for filter buttons
+    document.querySelector('.filter-group').addEventListener('click', function (e) {
+      if (e.target.matches('.filter-btn')) {
+        const cat = e.target.dataset.cat;
+        App.filterByCategory(cat);
+      }
+    });
+  });
+})();
